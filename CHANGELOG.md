@@ -1,0 +1,666 @@
+# Changelog
+
+All notable changes to Ekin are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [1.9.0] - 2026-11-14
+
+### Added
+- **Ctrl+B shows or hides the sidebar (`main.py`, `shortcuts_dialog.py`, #161)**: Like the button in the board header. Inside the text editor, Ctrl+B is still Bold.
+- **Settings → Ekin folders (`settings_dialog.py`, #153)**: Where Ekin keeps each thing on this computer: the program, your data (the database), backups, logs, templates and imported prompt packs. Each one has its path and an **Open** button.
+- **Phase bar in the board footer (`widgets.py`, `board_view.py`, #184)**: Next to the task count, a small bar splits the open cards by column, each part in its column's colour. Hovering over a part shows its column and how many cards it has. Finished cards are not counted, so the bar shows where work piles up and does not grow with the history.
+- **Third-party notices ship with Ekin (`THIRD_PARTY_NOTICES.md`, `licenses/`, `ekin.spec`, `installer.iss`)**: The installer carried neither Ekin's license nor those of the software it bundles. `LICENSE` and `THIRD_PARTY_NOTICES.md` now go to the Ekin folder, and the license texts to `_internal\licenses`: the GNU LGPL 3.0 and GPL 3.0 for Qt and PySide6, Pygments' BSD license and Python's license, copied from the Python that builds the installer so it also covers the libraries in that build (OpenSSL, libffi, SQLite…). The fonts' and icons' licenses were already in `_internal\assets`.
+
+### Changed
+- **Board templates follow the app language, with short column names (`templates.py`, `strings.py`, `column_roles.py`, #144, #149)**: With the app in English, the template browser showed the factory templates in Spanish, and the boards made from them had Spanish columns, tags and starter tasks. Now their name, description and category follow the app language, and so do the columns, tags, starter tasks and AI instructions of a new DEV, Socratic or GTD board. The columns are short, with an emoji and in capitals: `📥 BACKLOG · 📋 READY · ⚡ IN PROGRESS · 🔍 REVIEW · 🚀 DONE` (in Spanish `LISTO · EN CURSO · REVISIÓN · HECHO`), and likewise on Socratic and GTD boards. Each name keeps the word Ekin uses to tell the column's role, so the MCP summary and moving to Done work as before. Existing boards do not change. The Getting Started tutorial cards are still in Spanish.
+- **The Socratic and GTD prompts reply in the app language (`assets/prompt_packs/`, `prompt_packs.py`, #145)**: They always ended with «Always reply to me in Spanish». They now use the app language, both when copied from the Prompt Clipboard and in the ▶ Work start prompt, and they name the columns by their emoji, so they work with the new short names and with older boards.
+- **The local folder is no longer called a repo everywhere (`strings.py`, `README.md`, #146)**: Socratic and GTD boards link a notes folder too, so the labels say *Local folder*, with the repo as an example.
+- **▶ Work starts with INITIAL in a folder without code (`start_working.py`, #152)**: On a DEV board whose folder has no code files yet (dependency folders and ignored files do not count), the CLI opens with the INITIAL prompt, which sets the project up, instead of INTRO.
+- **The CLI update is retried before warning (`cli_tools.py`, `start_working.py`, #151)**: ▶ Work tries the update up to 3 times, 2 s apart, and the progress window says which attempt it is on. A timeout is not retried, because it has already waited 2 minutes.
+- **Reordering boards in the sidebar (`sidebar.py`, #150)**: A single line marks the gap where the dragged board will land, also between two boards and below the last one. The board being dragged is dimmed in its place, and the copy under the cursor has its own background. A long list scrolls by itself near its edges. A board now opens when the click is released, so pressing to drag it no longer opened it first.
+- **The tag and priority managers' edit and delete buttons are icons (`detail_dialog/tag_manager_dialog.py`, `detail_dialog/priority_dialog.py`, #158)**: «✎», «🗑» and «×» did not make clear which button did what, and in Manage Priorities they did not fit in the button and it looked empty. They are now the pencil and bin icons used in the rest of the app, with their tooltips.
+- **Links and attachments open in their own window (`detail_dialog/task_detail_dialog.py`, `widgets.py`, #205)**: Every link added a row under the notes, so a task with many links left little room for its description. The task detail now shows a single row with the count and a *Manage…* button. That button opens a window with the list, where links are opened, added and deleted as before. On the board, a card shows a paperclip with the number of links when it has more than one, with or without a due date (before, the count only appeared next to the due date).
+- **Installed copies check for updates in `Txek-Systems/ekin` (`main.py`, `installer.iss`, #228)**: From this version on, Ekin's releases come from the new public repository. Until that repository publishes a release, the automatic check finds nothing and stays silent; a manual check shows the error.
+- **Fewer GitHub Actions minutes (`.github/workflows/ci.yml`, `.github/workflows/release.yml`, #226)**:
+  - CI no longer runs for pushes that only change Markdown files or `graphify-out/`.
+  - A new push cancels the run before it.
+  - Lint and tests share one Python 3.12 job, with a pip cache.
+  - The release workflow starts only when `version.py` changes, and runs the tests on Python 3.10–3.12 before it builds the installer.
+- **The license is the official PolyForm Noncommercial 1.0.0 text (`LICENSE`, `README.md`)**: The repository's copy had 10 of the license's 15 sections: *Personal Uses*, *Noncommercial Organizations*, *No Other Rights*, *Patent Defense* and *Definitions* were missing, a 30-day termination clause stood in for *Violations* (32 days) and an MIT-style disclaimer for *No Liability*. It is now the official text, headed by the `Required Notice:` copyright line that anyone redistributing Ekin must keep. It is still the same license: Ekin stays free for personal and other noncommercial use. The README gains a License section.
+
+### Fixed
+- **A card can be dragged from its title (`widgets.py`, #157)**: Pressing on a card's title and dragging did nothing, so the drag only started from the rest of the card. The title is rich text, and Qt's text control in that label kept the mouse movements to itself. The whole card now starts the drag, except the linked-board pill, which is a button.
+- **Dropping a card no longer freezes the board (`board_view.py`, `board_mixins.py`, `widgets.py`, #157)**: Each drop rebuilt every card in the source and target columns and restyled every card on the board. With 81 cards in *Done*, the window froze for about 1.5 s. Now only the dropped card is created again, and the column counter updates in place: on that board, a drop into *Done* takes about 0.1 s. If the board on screen no longer matches the database (an agent changed it during the drag), both columns are rebuilt as before.
+- **Dragging a card over a column no longer stutters (`widgets.py`, #157)**: When a dragged card entered or left a column, the column's highlight border was set through its stylesheet, which made Qt restyle every card in it: about 0.4 s per column with 81 cards. The border is now painted directly, and entering a column with its gap takes about 30 ms.
+- **A collapsed column opens faster under a dragged card (`widgets.py`, `board_view.py`, #157)**: Holding a card over a collapsed column waited 650 ms and then built every card in it, which froze the drag for almost a second in large columns. It now waits 350 ms and shows the first 12 cards, with a "+N more" line under them; the column collapses again after the drop, as before.
+
+## [1.8.0] - 2026-10-19
+
+### Changed
+- **Updates install unattended and reopen Ekin (`main.py`, `installer.iss`, #134)**: Installed copies used to open the full setup wizard after downloading an update and close Ekin, leaving the user to click through it and start the app again. The verified installer now runs silently (only Inno Setup's progress bar, no questions or reboot, closing whatever uses its files) and Ekin reopens when it finishes, as the user who started the update (not elevated).
+
+### Fixed
+- **Two releases could build at once (`.github/workflows/release.yml`, #134)**: Two pushes in a row started two release runs; the second didn't see the new tag yet, rebuilt the installer and failed to create a release that already existed (it happened with v1.7.0, harmlessly). Release runs now queue one after the other.
+
+## [1.7.0] - 2026-10-18
+
+### Added
+- **AI workflow diagram (`workflow_dialog.py`, `main.py`, `settings_dialog.py`, #137)**: A new dialog shows how a task travels from idea to done when you work with an AI agent: capture, get it ready, **▶ Work**, the agent works and logs its progress, review and done, with who acts at each step (you, Ekin or the agent) and a note on columns and handoffs. It opens from the command palette (*Show the AI workflow diagram*), from a new *AI workflow* row in Settings and from the welcome guide.
+
+### Changed
+- **The welcome guide shows the AI-agent workflow, in your language (`onboarding_dialog.py`, `strings.py`, `templates.py`, #137)**: The slides now cover board types and column roles, cards with a journal, working with your AI agent (**▶ Work**, Prompts, sandbox) and a typical day with an agent (with a button to the new diagram), plus shortcuts and views. Their bullet points were hard-coded in Spanish, so the English guide showed them in Spanish; every text now comes from the translations. The text boxes around every label are gone, the guide is a bit wider (the Spanish checkbox was cut off), and the interactive tour's last step and the *Primeros Pasos* board point to **▶ Work**, the footer's MCP and cloud buttons and the new board types.
+- **Board types renamed and tuned for working with AI agents: DEV, Socratic and GTD (`templates.py`, `assets/prompt_packs/opositor.json`, `assets/prompt_packs/gtd.json`, `column_roles.py`, `strings.py`, #136)**: The built-in templates and their prompt packs are now **DEV — Desarrollo de software**, **Socrático — Estudio guiado por preguntas** and **GTD — Getting Things Done**; template and pack ids are unchanged, so existing boards keep their pack. The Opositor board becomes a Socratic tutor for any subject (oposiciones, certifications, university): its AI system prompt and pack no longer hand out answers. A new *DIÁLOGO SOCRÁTICO* prompt makes you explain a topic and guides you one question and one hint at a time; self-tests let you retry a wrong answer after a guiding question; outlines start from your own draft; doubts are answered after asking what you think; and nothing assumes Spanish legislation (a mock exam's penalty rule is asked, not assumed). Its default tags and seed tasks are generic. Columns named *Vuelta* or *Repaso* (the Socratic board's study rounds and spaced review, also on boards created before) now have the in-progress role, so the MCP `active_task` and the start prompt see the topics being studied instead of skipping to *Simulacro & Test*. The GTD pack gets a start prompt, *INICIO*: **▶ Work** used to open the agent with *CAPTURA RÁPIDA* and an empty brain dump, and now it reports Inbox, @Next, @Waiting and due dates and proposes the next GTD step.
+### Fixed
+- **The due date was cut off in Task Detail (`detail_dialog/task_detail_dialog.py`, #133)**: Qt sizes the date field without the app theme's padding and the calendar button, so its text area was narrower than a date and the last digit sat under the button. The field is now wide enough for any date in the current font.
+- **The Diary viewer's More… menu was dark and unreadable (`diary_viewer_dialog.py`, #142)**: The menu and its folder submenus didn't use the app's menu style, so they took the system's dark palette. They now follow the light and dark themes like every other menu.
+
+## [1.6.0] - 2026-10-18
+
+### Changed
+- **The Diary button shows every Markdown and text file of the board's repo (`diary_viewer_dialog.py`, `board_view.py`, #142)**: Besides `diary.md` and `diary_archive.md` (still the first tabs), the viewer opens the other `.md` / `.txt` files of the repo's root as tabs, and a new **More…** menu, grouped by folder, opens the ones in subfolders as extra tabs. The folder is walked directly, so gitignored files such as the diaries are listed, while `venv`, `node_modules`, `.git`, build folders and `*.egg-info` are skipped (up to 500 files). `.txt` files are shown as plain text, *Reload* also picks up new files, and the button now shows whenever the folder has any `.md` / `.txt` file.
+
+### Fixed
+- **Task cards cut long titles and overflowed their column (`widgets.py`, `styles.py`, #132)**: Titles of three or more lines lost their first and last lines, because the column stacked its cards top-aligned and Qt then sized each card for a wider width than the real one. Cards could also be wider than the column and get cut on the right: the `#id` took width from every title line, a word with no break point (`RELEASE/DISTRIBUTION`, `snake_case`) couldn't wrap, and neither could the date + time + timer + linked-board row. Cards now get the full height of their title, the `#id` sits inline at the start of the title, titles can break after `/`, `\` and `_` (the stored title is unchanged), and the date/timer/linked-board row wraps.
+
+## [1.5.0] - 2026-10-15
+
+### Added
+- **Task id on cards and in Task Detail (`widgets.py`, `detail_dialog/task_detail_dialog.py`, `styles.py`, #109)**: AI agents refer to cards by their id over MCP (*#108*), but Ekin never showed it. Each card now shows a small muted `#id` before its title, and Task Detail shows it next to the title in the header.
+- **Remaining AI CLI quota traffic light (`cli_quota.py`, `quota_popup.py`, `assets/claude_statusline.py`, `sidebar.py`, `start_working.py`, #88)**: A new dot in the sidebar's utility bar turns green / amber / red with the most-used Claude Code limit window (< 70 % / < 90 % / above; grey without data) and opens a popup per detected CLI with the remaining session (5 h) and weekly (7 d) quota and their reset times. The data comes from Claude Code's documented status-line JSON (`rate_limits`, Pro/Max plans): on an explicit *Enable quota reading* click (with confirmation), Ekin installs a small stdlib status-line script in `~/.claude/settings.json` — backing the file up, keeping every other key and still showing any status line you already had — that saves the quota to `~/.ekin/cli_quota/`; *Stop reading the quota* restores the previous setup. Antigravity and Gemini CLIs don't expose their quota ("No data"). *Work* asks before opening Claude Code when its quota is red.
+- **Work: open your AI CLI on the board's repo (`start_working.py`, `cli_tools.py`, `board_view.py`, #87)**: A **Work** (*Trabajar*) header button (on a board without a local folder it first asks for one) that (1) starts Ekin's MCP server (or, if the board's MCP is disabled, opens the MCP dialog and stops), (2) updates the AI CLI (`claude update`, `agy update`; a failure is reported but doesn't block), (3) registers the board's MCP server in it if missing (Claude Code: `claude mcp add --transport sse` in the repo's local scope; Antigravity CLI: `agy mcp add` with the HTTP `/rpc` endpoint) and (4) opens it in a new external console in the repo with the board pack's start prompt (INTRO). Installed CLIs (Claude Code, Antigravity CLI, Gemini CLI) are auto-detected from the PATH; with several, a picker asks which one. CLIs installed as npm `.cmd` shims can't safely receive a multi-line prompt through `cmd.exe`, so for them the prompt is copied to the clipboard instead (with a notice).
+- **Development diary viewer (`diary_viewer_dialog.py`, `board_view.py`, #86)**: On boards linked to a local folder that contains `diary.md` and/or `diary_archive.md`, a new *Diary* header button opens them rendered as Markdown (one tab each, read-only), with *Reload* (keeps the scroll position) and *Open in editor*. The button is hidden when the board has no folder or the folder has no diaries.
+- **Link a board to a local folder (repo) (`sidebar.py`, `database/boards.py`, `detail_dialog/repo_files.py`, `mcp_server.py`, `prompt_packs.py`, #85)**: *Edit board* has a new *Local folder (repo)* row (Browse… / Remove), stored in the new nullable `boards.local_dir`. AI agents get it over MCP (`get_board_info.local_directory` and the server instructions, as their expected working directory) and prompts can use `{{repo_path}}`. Typing `@` in Description or Journal now also lists the repo's files (respecting `.gitignore` via `git ls-files`, or skipping `venv`/`node_modules`/build folders otherwise; capped at 5000), and picking one inserts its link and adds it to *Links / attachments*. The folder is machine-specific: it is never written to `.ekboard` sync files, exports or templates, and is not copied with the board.
+- **Underline in Description and Journal (`detail_dialog/markdown_edit.py`, #68)**: New «U» button in the formatting toolbar, plus `Ctrl+U` / `Ctrl+S` (Spanish Word's *Subrayado*); listed in the keyboard shortcuts dialog.
+- **Numbered-list button in Description and Journal (`detail_dialog/markdown_edit.py`, #62)**: New «1.» toolbar button turns the current or selected lines into a numbered list (typing `1. ` / `1) ` keeps working).
+- **Insert files into Description and Journal (`detail_dialog/markdown_edit.py`, `detail_dialog/log_entry.py`, #61)**: New paperclip button in the formatting toolbar opens a multi-file picker and inserts each file as a `📄 name` link; every inserted file is also added to the task's *Links / attachments* (no duplicates), which keeps working independently. Files pasted while editing an already-posted journal entry now reach *Links / attachments* too.
+- **`@` mentions of links / attachments in Description and Journal (`detail_dialog/markdown_edit.py`, #63)**: Typing `@` (at line start or after a space, so e-mails don't trigger it) opens a themed popup with the task's current *Links / attachments*, filtered as you type; picking one replaces `@text` with a `📄 name` (file) or `🔗 name` (web) link. Listed in the keyboard shortcuts dialog.
+- **Reorder boards by drag & drop in the sidebar (`sidebar.py`, `database/boards.py`, #58)**: Drag a board onto another to place it before/after it (accent line shows where it lands). The order persists in a new nullable `boards.position` column; boards never reordered (and any board created, copied, imported or restored later) keep the previous by-creation order at the end. Archived boards keep their place; `Ctrl+1..9` and every board list follow the new order.
+- **AI Prompt Clipboard per board (`prompt_clipboard_dialog.py`, `prompt_packs.py`, #67)**: New *Prompts* button in the board header opens the board's prompt pack — search, category filter, preview and one-click copy. Board variables (`{{board_name}}`, `{{mcp_server}}`) are filled in automatically; any other `{{variable}}` is asked for on copy. Built-in packs in `assets/prompt_packs/`: **DEV** (the 12 AI-Dev-Prompt-Clipboard protocols adapted so the Ekin board, via MCP, replaces `diary.md`/`backlog.md`), **Opositor** and **Personal / GTD**. Packs use the same JSON schema as AI-Dev-Prompt-Clipboard and can be imported. The chosen pack is remembered per board (`boards.prompt_pack`) and preset by the Software Agile / Opositor / GTD templates.
+
+### Changed
+- **Shared boards merge concurrent edits of the same task field by field (`board_sync.py`, `database/sync.py`, #97)**: When you and a collaborator both changed the same task between syncs, the newest version won as a whole, so e.g. your move to another column was lost if they had renamed the card afterwards. Each sync now keeps, per task, the values it left in the `.ekboard` file (new nullable `tasks.sync_base`), and the next merge compares both sides against them field by field (title, description, column, due date and time, recurrence): a field changed on one side only keeps that change, and only a field changed on both sides is a conflict, resolved as before (the newest wins and a superseded description is archived in the task's journal). Tasks last synced by an older Ekin have no base yet and keep the old whole-task behaviour until their next sync.
+- **Board header decluttered into a status footer; *Work* button and local folders in Settings (`board_view.py`, `settings_dialog.py`, `styles.py`, `main.py`)**: At 1280 px with the sidebar open the header needed ~1,340 px for ~950 available, so the title, the task count and most buttons were cut off. The task count and the MCP and sync buttons moved to a new footer status bar; the header keeps the title and the actions. *Start working* is now **Work** (*Trabajar*) and is always shown: on a board without a local folder it first asks for one (one click instead of going through Edit board) and then starts. Settings gains tabs — *General* and *Local folders* (every board with Browse / Remove; changes refresh the board header at once). Tabs are themed for both palettes (also fixing the diary viewer's default-grey tabs), and Settings rows now wrap their descriptions and the dialog is 640 px wide, so the welcome-tour buttons are no longer cut off.
+- **MCP server text in English (`mcp_server.py`, `local_ai.py`, #74 part A)**: Everything the MCP server writes itself — the 17 tool descriptions and their parameters (loaded into every agent session), the server instructions, error and response messages and the executive-summary Markdown — is now in English, which costs agents fewer tokens than Spanish; descriptions were also brought up to date (column roles, `active_task`, `latest_comment`, Done clearing the due date) and `get_task` no longer promises a checklist it doesn't return. Board content (titles, descriptions, journal) and the journal's audit entries are unchanged.
+- **AI prompts and MCP map the board by column role (`local_ai.py`, `mcp_server.py`, `assets/prompt_packs/*.json`, #84)**: The MCP executive summary only reported *done* and *in progress*, so the INTRO prompt — which forbids `list_tasks` — could never see Ready, Review or Backlog. The summary now returns `active_task` (top card of In Progress, else Review/QA, else Ready, resolved server-side), `columns_flow` (every column with its role, count, WIP limit and top 5 cards) and `due_soon` (non-done cards due within 7 days), also rendered in its Markdown. `list_columns`, `get_board_info` and the server instructions expose each column's `role`; `get_task_condensed_context` adds `latest_comment` (the latest handoff). The DEV pack (INTRO, FEATURE_PLAN/BUILD, OUTRO, INITIAL, MIGRATE, AUDIT, REMEDIATE, RDi, strategy and RECOVER) now refers to columns by role instead of position ("the column right after in-progress", "last (done) column"); INTRO proposes Backlog candidates when nothing is active and reports pending counts per role. GTD's daily plan and the Opositor study session now point at `due_soon`/`columns_flow`.
+
+### Removed
+- **Managed llama-server engine and unused methods (`local_ai.py`, `main.py`, #129, #130)**: The managed local LLM engine (detection, download, start/stop and streaming), which was kept for the MCP JSON translation later dropped in #74, is gone, together with its tests. Seven methods nobody called are gone too (sync delegates in `board_mixins`, an old link confirmation in Task Detail, a drag helper and `MainWindow.show_landing_tour`). Duplicate detection, semantic search, embeddings and Privacy Shield are unchanged.
+- **Local-AI helpers superseded by frontier agents over MCP (#60)**: Local AI is now scoped to duplicate-task detection, sensitive-data masking (Privacy Shield) and condensing the context served over MCP (the local LLM engine stays in `local_ai.py`; the MCP-JSON-to-English translation it was kept for was later dropped — #74 shipped only the server's own text in English). Removed from the UI: Task Detail's *Summarize*, *Break down*, *⚡ Checklist*, *⚡ Suggest* (tags) and *✨* title suggestion; the multi-selection *Generate with local AI* SPEC / Master Prompt modal (`ai_spec_dialog.py`); the board header's *Daily Standup* dialog (`daily_standup_dialog.py`); the search dialog's *🧠 Semantic AI search* toggle; and `ai_assist_dialog.py`. The MCP tools `get_board_executive_summary`, `get_task_condensed_context`, `search_tasks_semantic` and `sanitize_text` are unchanged. Orphaned generators (`build_spec_prompts`, `generate_structural_spec`, `SpecGenerationThread`, subtask/checklist/tag/title suggesters) and their UI strings (plus older SPEC/Standup strings already unused) were removed.
+
+### Fixed
+- **Releases failed when their notes had emoji or arrows (`.github/scripts/extract_release_notes.py`, `release.yml`)**: Since the release job moved to Windows (v1.0.1), the notes were piped through a cp1252 console, so a `📄` or `→` in the CHANGELOG broke the step and the version wasn't published. The notes are now written straight to the file as UTF-8.
+- **Shared-board sync lost changes made while it ran (`board_sync.py`, `database/sync.py`, #123)**: After writing the `.ekboard`, the sync marked *every* task as synced. A card created or edited in the meantime, for example by an AI agent over MCP, was flagged as synced without being in the file, and the next sync took it for a remote deletion and deleted it. Importing remote changes also overwrote, or deleted, local tasks created or edited after the sync had checked for local changes. Each task is now marked with the version that actually reached the file. Imports run under a write lock and skip tasks changed locally, which the next sync merges field by field, and the two-way merge reads and writes in a single transaction.
+- **Two syncs of the same board could overlap (`board_sync.py`, `board_sync_controller.py`, `sidebar.py`, `board_mixins.py`, #124)**: *Sync now* from the sidebar and linking a file ran the sync directly, alongside the automatic one, and both rewrote the same file and rows. A per-board lock now makes a second sync return *busy* without touching anything: the sidebar shows "This board is already syncing", and the automatic sync retries shortly after.
+- **AI agent changes didn't reach the shared file, bell, Calendar, My work or the .ics feed (`board_view.py`, `main.py`, #125)**: After an MCP change the board reloaded without notifying `data_changed`, the only signal behind the auto-sync and those views. It now notifies once per burst. When an agent changes a board that isn't on screen, the bell, Calendar, My work, Dashboard and `.ics` refresh too.
+- **Security hardening from the 2026-10-15 audit**:
+  - *Text from agents:* HTML sent by an agent only skips the no-HTML Markdown filter when the whole text starts with a tag; before, any tag on the first line was enough (`markdown_html.py`, #112).
+  - *Images:* rich text no longer loads images or backgrounds from network locations (UNC or `file://host`), which Qt fetched as soon as a card from a shared or imported board was opened (`detail_dialog/html_utils.py`, #113).
+  - *MCP server:*
+    - `delete_task_link` could delete a link from a task on another board (`mcp_server.py`, #121).
+    - Enabling MCP with an empty token field now generates a token (`mcp_sync_dialog.py`, #114).
+    - A client that stalls mid-request no longer holds a server thread forever, thanks to a 30 s socket timeout (#115).
+  - *Links:* opening links to 20 more Windows file types that run code or mount content (`.chm`, `.iso`, `.vhdx`, `.appref-ms`…) now asks for confirmation first (`detail_dialog/security_utils.py`, #116).
+  - *Updates:* releases now publish the installer's SHA-256, and the updater checks it before running the installer (`.github/workflows/release.yml`, `main.py`, #117).
+  - *Privacy Shield:* it also masks GitHub fine-grained tokens, Google, Slack and Stripe keys and JWTs, and labels Anthropic keys correctly (`privacy_shield.py`, #118).
+  - *Masking:* `list_tasks` and `get_task` now declare `mask_sensitive`, so agents can ask for it (#119).
+  - *Repository:* `.env` files are ignored by git (#120).
+- **MCP accepted any due date or time (`mcp_server.py`, #126)**: `2026-10-16T10:00` or "next week" were stored and the task vanished from the Calendar. `create_task`, `update_task` and `create_tasks_batch` now require `YYYY-MM-DD` / `HH:MM` and return a clear error otherwise.
+- **DEV prompt pack: AUDIT left no cards and REMEDIATE had nothing to fix (`assets/prompt_packs/dev.json`, #111)**: AUDIT kept every finding for a single `create_tasks_batch` call at the end, and its offensive framing ("Cybersecurity Auditor", "threat inspection") led the agent to write proof-of-concept probes. The AI model's safety filter cut that response, so the whole audit was lost, and REMEDIATE, which only looked at Backlog, reported the empty queue as a clean codebase. AUDIT is now a defensive review: findings are verified by reading the code and running the tests, cards describe the defect and its fix without attack details, and each area's findings are registered as soon as it is verified (at most 3 batches), tagged `audit` with their priority and without duplicating cards already on the board. REMEDIATE builds its queue with `list_tasks(tag: "audit")`. If the queue is empty, it first registers any findings still in the conversation and otherwise stops and asks you to run AUDIT. It also writes a regression test before each fix and sends cards it can't fix safely back to Backlog as *BLOCKED*. Also in the DEV pack: INITIAL and MIGRATE ran Graphify commands that don't exist (`graphify build`, `graphifyy claude`; now `graphify update .` and `graphify claude install`), and every prompt now points at `graphify-out/GRAPH_REPORT.md`.
+- **CI: the test suite crashed on Python 3.10 and 3.11 (`pyproject.toml`, `tests/conftest.py`, #108)**: Since 2026-10-14 every CI run aborted on 3.10/3.11 while 3.12 passed. The main cause is a bug in PySide6 6.12.0 on Linux: every `processEvents()` call drops one reference to `None`, and a test that waits in a `processEvents()` loop drained it until Python aborted (*deallocating None*); on 3.12 `None` can't be freed. PySide6 6.12.0 is now excluded, so CI and the Windows build stay on 6.11.x until a fixed release. Ekin itself never calls `processEvents()` and ships on Windows, so the app wasn't affected. A second, latent crash in the per-test widget cleanup is fixed too: on Python < 3.12 the garbage collector could run in the middle of listing the open windows and destroy one still in that list, so the cleanup now collects garbage first.
+- **Two open Ekins silently shared the MCP port (`mcp_server.py`, `board_mixins.py`, `main.py`, #107)**: On Windows the MCP server enabled `SO_REUSEADDR`, so a second Ekin bound port 8765 while the first was still listening. Requests kept going to the first one, the second claimed its agent was connected, and since each development checkout has its own database, agents could be writing to the other Ekin's board. The port is no longer shared on Windows (it wasn't needed to rebind after closing), and when a board has MCP enabled but this Ekin's server isn't running the footer button now says *AI Agent (MCP) unavailable*, with a tooltip naming the busy port. After an update restart the button updates once the retried start gets the port.
+- **Shared-board sync counted untouched tasks as conflicts (`board_sync.py`, #97)**: When both sides had changes, the two-way merge compared each task's remote column with a local column its query never read, so every task nobody had touched counted as a conflict, got its `version` bumped and its `updated_at` reset. Only tasks that really changed are merged now.
+- **Native crash when Ekin restarted after an automatic update (`main.py`, #106)**: The git updater restarted with `os.execv`, which on Windows replaced the process without Qt's orderly shutdown while the MCP server's threads were still running, so every update ended in an access violation (`0xc0000005` in `pyside6.abi3.dll`). The new version now starts as a separate process and the current one quits normally. Quitting also stops the MCP server (it never stopped before), freeing port 8765, and at launch a busy MCP port is retried for a few seconds instead of leaving agents without the board.
+- **Ekin crashed when closing a task an AI agent had changed meanwhile (`board_view.py`, `detail_dialog/task_detail_dialog.py`, #103)**: Clicking a card opened Task Detail with a nested event loop *inside* the card's own click event; if the live reload (e.g. after an MCP change) destroyed that card while the detail was open, closing it returned into the freed widget and the whole app closed (Windows: access violation `0xc0000005` in `Qt6Widgets.dll`, seen twice during manual testing). The card's click now opens the detail right after its event returns. Also from that manual test: the change-detection snapshot was taken before the app stylesheet was applied, so showing the dialog changed the description's HTML and the merge always treated it as edited by the user — the agent's description was lost and the live refresh never applied. The description now uses Qt's document *modified* flag (only real edits set it), and the detail's `BOARD · COLUMN` header follows a column move made elsewhere.
+- **Closing a task silently overwrote changes made meanwhile by AI agents or other users (`detail_dialog/task_detail_dialog.py`, `board_view.py`, #103)**: Task Detail saved every field as it was when opened (clicking outside auto-saves), so whatever an MCP agent, another process or `.ekboard` sync changed while it was open was reverted — e.g. a card an agent moved to Done got its due date back. Saving now writes only the fields you changed since opening; the rest keep the database's current value. While you have no unsaved changes the detail now really refreshes live (the old refresh looked for a non-existent widget and never updated anything), and if the task is deleted elsewhere it closes with a notice instead of failing on save. The board's live reload also waits while a context menu or a modal dialog is open, so it can't destroy the column or card that opened it.
+- **"TaskCard already deleted" error after closing a task (`widgets.py`, #102)**: Clicking a card opens Task Detail with `exec()` (a nested event loop) from inside the card's `mouseReleaseEvent`; if the board was rebuilt meanwhile (e.g. a live reload after an AI agent changed it over MCP), the handler then called `super().mouseReleaseEvent()` on the destroyed card and the non-fatal error dialog popped up. The base handler now runs before the click signals, so nothing touches the card after the nested loop.
+- **The MCP server didn't start with the app (`main.py`, #101)**: Ekin's embedded MCP server only started when the MCP dialog was saved, so after every restart (including the automatic update) AI agents lost the board until that dialog was opened again. It now starts on launch whenever a board has MCP enabled; a busy port is logged without blocking startup. Tests use a fake manager so they never open the real port.
+- **Files dragged or pasted from Explorer were attached twice (`detail_dialog/markdown_edit.py`, #82)**: Dropping files onto Description, a new Journal entry or a Journal entry being edited inserts `📄 name` links at the drop point and adds them to *Links / attachments* (now covered by a test that drives the real drag-enter/move/drop events). `QUrl.toLocalFile()` returned `C:/…` paths while the paperclip picker stores `C:\…`, so a file attached both ways appeared twice; dropped and pasted paths are now normalized to the native form.
+- **MCP `list_task_comments` and `get_task` leaked raw Qt HTML (`mcp_server.py`, #84)**: Journal entries and descriptions now go through `clean_html_description()` like `list_tasks` already did (no DOCTYPE/`<style>` boilerplate), and `list_task_comments` accepts `mask_sensitive`.
+- **Markdown written by AI agents showed up as one run-on paragraph (`markdown_html.py`, `mcp_server.py`, `html_utils.py`, `main.py`, #99)**: The MCP `create_task`, `create_tasks_batch`, `update_task` and `add_task_comment` stored the agent's Markdown as-is, but Task Detail and the Journal render HTML, so line breaks, headings, lists and acceptance-criteria checklists collapsed. They are now converted to Qt HTML with `QTextDocument.setMarkdown()` (GitHub dialect, no new dependency); HTML sent by an agent is kept, while HTML embedded in Markdown is shown as text (as the old `html.escape` did). The `[agent]:` prefix of journal entries is escaped so CommonMark doesn't swallow it as a link definition. MCP reads now return checklists as `• [ ]` / `• [x]`. A one-off startup migration (flag `md_content_migrated`) converts existing multi-line plain-text descriptions (bumping `version` so shared boards export them) and journal entries (skipped on shared boards, whose journal merge is content-keyed).
+- **MCP `update_task` went through the legacy `database.update_task` (`mcp_server.py`, #98)**: It overwrote the legacy `tag_text`/`tag_color` fields, couldn't set a due time, stored `""` instead of NULL when removing the date (leaving the time behind) and wrote the task and its tags in separate transactions. It now uses `save_task_full`: one transaction and one `version` bump, untouched fields (recurrence, linked board, legacy tag fields, time, tags) are preserved, the schema accepts `due_time`, and removing the date also removes the time.
+- **Cards an AI agent marked as done stayed in the Calendar and My Work (`mcp_server.py`, `column_roles.py`, #83)**: When the MCP `move_task` moves a card into a Done column (any board), its due date and time are cleared in the same update and the old date is written to the card's journal; the response reports `due_date_cleared`. Done columns are recognized by name through the new shared `column_roles.classify_column()` (backlog / ready / in_progress / review / done / other), which also replaces the inline keyword lists of the MCP executive summary (now also recognizing names such as "En Progreso"). Manual drags are unchanged.
+- **Moving a card to another column was invisible to shared-board sync (`database/tasks.py`, `mcp_server.py`, #97)**: Drag & drop, undo/redo of a move and the MCP `move_task` changed the column without bumping `tasks.version`, so `.ekboard` sync treated the task as untouched — if a collaborator had edited the same task, the remote column won and the (newer) local move was lost; otherwise a phantom conflict was counted. A column change now bumps `version` once; reordering within the same column still doesn't.
+- **Journal toolbar wrapped onto two lines (`detail_dialog/task_detail_dialog.py`)**: With the new underline, numbered-list and attach buttons the Journal's formatting toolbar no longer fit; the Journal panel now reserves room for it (minimum dialog width 1240 px).
+- **Inline journal editor ignored the chat image width (`detail_dialog/log_entry.py`)**: It looked for the task dialog on its direct parent (the chat container), so pasted images were scaled to the editor instead of the chat.
+- **MCP `list_tasks` queried every column twice (`mcp_server.py`)**: A leftover loop repeated the task and tag queries and discarded the result.
+- **`privacy_shield` missing from `pyproject.toml` `py-modules`**: A pip install would not ship it, breaking the MCP server.
+- **Long column titles cut mid-character (`widgets.py`, #59)**: The column title now shrinks to the free header space and elides with "…", keeping the WIP counter and header buttons inside the column; the full name is shown in the tooltip.
+- **MCP `list_tasks` leaked raw Qt HTML (`mcp_server.py`)**: Task descriptions are now passed through `clean_html_description()` before being returned (and before PII masking), so agents no longer receive DOCTYPE/`<style>` boilerplate that wasted tokens.
+
+## [1.0.1] - 2026-09-11
+
+### Added
+- **Standalone Windows Installer (`installer.iss`)**: Official modern setup assistant with desktop & start menu shortcuts, clean uninstallation, and support for non-elevated user installations without UAC elevation.
+- **PyInstaller Standalone Packaging (`ekin.spec`)**: Optimized `onedir` distribution bundle with instant launch performance (< 0.5s) without extraction overhead.
+- **Automated Update Checking from GitHub Releases (`main.py`)**: Checks for latest releases and downloads the installer with an interactive progress dialog (`QProgressDialog`).
+- **Automated CI/CD Windows Release Workflow (`.github/workflows/release.yml`)**: Builds the standalone package with PyInstaller and Inno Setup upon version bump and publishes the release installer asset.
+- **Automated Version Bump CLI (`scripts/bump_version.py`)**: Utility to bump versions across all project metadata, rotate changelogs, and publish releases with a single command.
+
+### Changed & Improved
+- **Database & Asset Path Anchoring**: When running packaged (`sys.frozen`), `_APP_DIR` resolves to `_internal` and `database.DB_NAME` defaults to `~/.ekin/ekin_board.db`, protecting user data from application re-installations and automatically migrating from legacy `~/EkinKanban/ekin_board.db`.
+- **Documentation**: Updated `README.md` with instructions for the Windows Standalone Installer.
+
+## [1.0.0] - 2026-09-03
+
+### Added
+- **Shared Boards & Asynchronous Synchronization with OneDrive / Shared Folders (`board_sync.py`, `database/sync.py`):**
+  - **Offline-First Collaboration**: Boards can be linked to a shared `.ekboard` file stored in OneDrive, Google Drive, Nextcloud, or a local LAN share.
+  - **Entity-Level Two-Way Merge Engine**: Deterministic revision-aware differential synchronizer (`board_sync.py`) supporting concurrent edits from multiple users.
+  - **No-Data-Loss Conflict Resolution**: When concurrent conflicting edits occur on the same task, the newest description is preserved on the card while the superseded text is automatically archived in the task's personal diary/chat log.
+  - **Pre-Merge Safety Backups**: Automated snapshots saved to `backups/sync_premerge_board_...` prior to every merge operation.
+  - **Reactive File Watcher**: `QFileSystemWatcher` integration in `BoardViewWidget` detecting background external changes written by OneDrive and seamlessly auto-reloading without interrupting the user.
+  - **UI Integration**: Header sync pill button (`☁️ Sincronizado` / `☁️ Vincular con OneDrive`), quick sync menu (`🔄 Sincronizar ahora`, `📂 Abrir ubicación del archivo`, `❌ Desvincular`), and sidebar cloud badges on shared boards.
+- **Multi-Card Selection with `Ctrl + Click` & Floating Action Dock (`widgets.py`, `board_view.py`):**
+  - **Explorer-like Multi-Selection**: Select multiple task cards across columns using `Ctrl + Click`.
+  - **Visual Selection Cue**: Selected cards display a highlighted 2px accent-blue border, tinted background, and a top-right `✓` badge.
+  - **Action Dock**: A bottom dock appears when 1 or more cards are selected, showing the count of selected cards, direct button to generate an AI specification, and `❌ Deseleccionar` (or `Escape` key).
+- **Autonomous Local AI Spec Generator for AI Coding Agents (`local_ai.py`, `ai_spec_dialog.py` — Vía B):**
+  - **Zero-Setup AI (Vía B)**: Integrates compact, state-of-the-art coder LLM (Qwen 2.5 Coder 1.5B Instruct ~980 MB) with background portable execution on local CPU/AVX2 without requiring external dependencies or accounts.
+  - **Multi-Engine Auto-Detection**: Automatically detects active local endpoints (Ollama, LM Studio, llama-server) or manages its own background runner.
+  - **Deterministic Structural Fallback**: Instant offline spec synthesizer generating complete software engineering architecture documents even without downloading the model.
+  - **Interactive Spec Dialog**:
+    - Generates 3 specialized formats: **Technical Architecture & Implementation Spec (Antigravity / Claude Code / Cursor)**, **User Stories & Acceptance Criteria (Gherkin)**, and **QA Test Plans**.
+    - Real-time token streaming in dark monospace editor with 1-click **Copy to Clipboard**, **Save to SPEC.md**, and **Create as Task in Board**.
+
+### Fixed & Improved
+- **Snapshot UUID Preservation on Undo/Redo (`database/snapshots.py`):** `snapshot_task`, `snapshot_column`, and `snapshot_board` now preserve `task_uuid`, `column_uuid`, and `board_uuid` so restored items never lose synchronization compatibility with OneDrive `.ekboard` files.
+- **Zombie Process Termination (`local_ai.py`, `main.py`):** Registered `atexit.register(stop_managed_runner)` with timeout/kill and connected `QApplication.aboutToQuit` to guarantee `llama-server.exe` exits cleanly.
+- **Remote Task Deletion Sync & No-Resurrection (`board_sync.py`):** If a collaborator deletes a task in OneDrive and the local task was already synced and untouched, the system removes it locally instead of resurrecting it into the shared file.
+- **Transient File Lock Retry on Windows (`board_sync.py`):** `write_sync_file_atomic` implements exponential backoff retry on `os.replace` to prevent `WinError 32` sharing violation errors on OneDrive shares.
+- **Database Layer Decoupling (`database/connection.py`):** Extracted `get_connection` and dynamic `DB_NAME` resolution into `connection.py`, breaking cyclic dependencies across database submodules.
+- **HTML Utilities DRY Centralization (`detail_dialog/html_utils.py`):** Moved `fit_html_images` and `linkify_urls` into a decoupled shared utility module.
+
+## [0.9.7] - 2026-09-03
+
+### Added
+- **Syntax-Highlighted Code Blocks in Task Description & Diary/Chat:**
+  - Integrated `pygments` (Monokai dark theme) rendering syntax-highlighted code inside fluid, self-contained monospace tables.
+  - Added dedicated `CodeBlockDialog` with support for major languages (Python, JavaScript, TypeScript, HTML, CSS, SQL, Bash, JSON, C/C++, C#, Rust, Go, Java, PHP, YAML, Markdown, Plain text).
+  - Added markdown shortcut: typing ```` ``` ```` or ```` ```<lang> ```` on a new line and pressing `Enter` opens the code block dialog directly.
+  - Interactive deletion: added a red `✕ Borrar` action directly on code block headers, a right-click context menu (`🗑️ Eliminar bloque de código`), and `Backspace` handling to delete the entire table structure cleanly.
+- **Horizontal Separator Rules (`---`):**
+  - Typing a third hyphen `-` on an empty line or pressing `Enter` over `---`, `___`, `***` or `—-` converts the line into a fluid full-width `<hr />`.
+  - Added dedicated separator button (`―`) on `RichTextToolbar`.
+- **Text Color Palette Picker:**
+  - Added `A` button with active color underline indicator and a curated palette (Red, Orange, Amber, Green, Cyan, Blue, Purple, Pink, Muted Gray, and Default).
+  - Includes custom color picker (`QColorDialog`) allowing any hex color to be applied to selected text or active typing cursor.
+- **Active Web Hyperlinks Preservation:**
+  - Pasting URLs over selected text automatically creates clickable `<a href="...">` anchors.
+  - Added `LinkDialog` (`🔗`) on toolbar for inserting and editing links.
+  - Automatic linkification of raw URLs in published chat entries (`linkify_urls`).
+  - Native browser dispatch (`QDesktopServices.openUrl`) when clicking web links in the editor or chat.
+- **Advanced Export & Import System (`export_dialog.py`, `exporter.py`, `importer.py`):**
+  - Multi-scope export (all boards or active board) in full data mode or column structure templates without tasks.
+  - Multi-format support (JSON, CSV, Markdown) with complete task metadata, links, timers, tags, and logs.
+  - Pure JSON importer with preview, tag resolution, atomic database transaction with rollback safety.
+
+### Fixed
+- **PySide6 Signal Type Safety in `open_code_dialog`:** Resolved `TypeError: setPlainText(bool)` caused by `QPushButton.clicked` emitting boolean state to optional string argument.
+- **QSS Font Point Size Warning:** Resolved `QFont::setPointSize: Point size <= 0 (-1)` by inheriting parent widget font configurations instead of uninitialized `QFont()` constructors.
+- **Fluid Table & Code Block Sizing in Chat:** Updated `fit_html_images()` in `detail_dialog/log_entry.py` to preserve percentage widths (`width="100%"`) and prevent code block tables from shrinking.
+- **Test Suite Fortification:** Expanded automated test suite to 213 passing tests with 0 failures and 0 warnings.
+
+## [0.9.6] - 2026-08-18
+
+### Added
+- **Click-outside to auto-save and close task detail popup.** When opening a task card in the
+  detail popup (`TaskDetailDialog`), clicking outside the popup within the main Ekin window
+  (e.g., clicking on the board, background, or sidebar) now automatically saves all changes and
+  closes the dialog returning to the board view, behaving identically to clicking the "Guardar
+  Cambios" button. Child modals (like the tag picker or delete confirmation) and dropdown popups
+  remain protected and do not trigger unexpected closes.
+
+### Changed
+- **Window title simplified to `Ekin v{version}`.** Updated the application window title string
+  from `"Ekin Kanban - Trello Lite v{version}"` to `"Ekin v{version}"`, and updated the README
+  title to `# Ekin Kanban`.
+
+### Fixed
+- **Log / Diario text clipping after editing comments.** Corrected an invalid fractional font size
+  (`font-size: 12.5px;` changed to `13px`) in `styles.py` on `#LogContent`. Qt CSS does not support
+  fractional pixel sizes, which previously caused an internal font point size error (-1) that broke
+  rich text font metrics in `QLabel` and caused edited comments to collapse vertically in the chat.
+- **Log / Diario automatic scroll positioning to latest comment.** Fixed an issue where the
+  log container had `setAlignment(Qt.AlignTop)` with `QSizePolicy.Ignored`, which caused Qt's layout
+  to miscalculate child sizes and leave empty space at the bottom of the chat list, scrolling into
+  blank area instead of showing the latest comment. Now uses natural `addStretch()` with `QSizePolicy.Preferred`
+  so the chat list lands flush on the latest entry without empty bottom gaps.
+- **Wide images or tables overflowing behind the chat area.** Added `fit_html_images()` in
+  `detail_dialog/log_entry.py` to bound all `<img>` tags to the chat viewport's usable width,
+  configured `image_width_provider` on the inline editor during comment editing, and enabled
+  `ScrollBarAlwaysOff` horizontally.
+
+## [0.9.5] - 2026-08-17
+
+### Fixed
+- **Taskbar icon fallback to Python script icon on Windows.** `SetCurrentProcessExplicitAppUserModelID`
+  was previously called inside `def main()`, which executed after `PySide6` and Qt's Windows
+  platform plugin (`qwindows.dll`) had already imported and initialized the process under
+  `pythonw.exe`. The call is now placed at the very top of `main.py` before any GUI/Qt imports.
+- **Native Win32 taskbar icon enforcement.** Added `apply_win32_icon(window)` calling
+  `user32.SendMessageW(hwnd, WM_SETICON, ...)` directly on the window `HWND` to guarantee the
+  taskbar button renders `ekin_icon.ico` at the OS window manager level.
+- **Installer shortcut direct binding.** `install.ps1` previously pointed the desktop shortcut to
+  `lanzar.bat`, which spawned a detached child process that Windows could not associate with the
+  shortcut's icon. The shortcut now targets `pythonw.exe` directly with `Arguments = "main.py"`
+  and `IconLocation = ekin_icon.ico,0`.
+
+## [0.9.4] - 2026-08-13
+
+### Fixed
+- **Critical: undoing a deleted task or column could crash the app.** If you deleted a task
+  and then deleted its column (or deleted a column and then deleted its board) before
+  undoing, undoing the older deletion tried to restore it into the original, no-longer-existing
+  column/board and crashed. It now degrades gracefully instead — the task/column just doesn't
+  come back, rather than the whole app going down.
+- **`ImagePreviewDialog` (the click-to-enlarge image view) was never destroyed after
+  closing.** Every image you previewed left a hidden, permanently-alive copy of the dialog (and
+  its image data) behind for the rest of the session.
+- **Desktop shortcut could show a blank icon, and the taskbar could fall back to Python's
+  generic icon.** `install.ps1`'s `git pull`/`git clone` had no error checking, so a failed or
+  incomplete update silently left an existing install (`~/EkinKanban`) outdated or missing
+  files — including the app icon — while the installer carried on and built a shortcut against
+  that broken checkout anyway. The installer now stops with a clear message if `git pull`/`git
+  clone` fails, and warns explicitly if `ekin_icon.ico` is still missing afterwards, instead of
+  silently producing a shortcut with no working icon. Also marked `*.ico`/`*.png` as binary in
+  `.gitattributes` as a defensive measure against line-ending corruption on checkout.
+
+## [0.9.3] - 2026-08-12
+
+### Fixed
+- **The enlarged image preview looked blurry.** A pasted image was only ever stored at its
+  small inline (chat/description) size, so opening it larger meant stretching that same tiny
+  source upward. A separate, higher-resolution copy (up to 1920px wide) is now stored
+  specifically for the preview, so it scales down from real detail instead of up from a
+  thumbnail.
+
+## [0.9.2] - 2026-08-12
+
+### Added
+- **Click-to-enlarge pasted images.** An image pasted into the task description or the
+  diary/chat — while composing, while editing an existing entry, or once it's already been
+  posted — now opens in a larger centered view when clicked, instead of staying tiny and
+  inline forever. Closes with a click anywhere on it, `Esc`, or the window's close button.
+
+### Fixed
+- **Taskbar icon showing as the generic Python icon on some PCs.** The underlying code
+  (absolute icon paths, an explicit AppUserModelID) was already correct as of 2026-07-29, but
+  a machine that ran an older Ekin build before that fix could have Windows caching the wrong
+  icon under the old AppUserModelID — a cache nothing since had invalidated, even after
+  updating. The AppUserModelID is now versioned (`EkinKanban.TrelloLite.2`) so Windows treats
+  it as a fresh identity and re-resolves the icon instead of serving the stale cached one.
+- **App icon redesigned**: `ekin_icon.png`/`.ico` no longer carry a baked-in white
+  background/drop-shadow — both now have a genuinely transparent background, for a cleaner
+  look in the taskbar and desktop shortcut.
+- **Click-to-enlarge did nothing on an already-posted diary/chat entry** (it worked fine while
+  composing). A `QLabel` interaction-flag call was overwriting the flag Qt needs to fire link
+  clicks at all, instead of adding to it — fixed, and locked in with a test that simulates a
+  real click instead of calling the handler directly.
+- **The image preview only ever scaled images down**, so a small pasted image (already
+  downscaled to fit the chat/description width) showed at its native, still-small size instead
+  of feeling like an enlargement. It now always scales to fill most of the screen, up or down.
+- **Images pasted into the task description could overflow** if the dialog was resized smaller
+  afterward, since they embedded at a fixed pixel width with no cap. They now default to the
+  same width as chat-pasted images.
+- **App icon still had a visible grayish background** instead of being fully transparent. The
+  first pass's threshold left much of a soft drop-shadow gradient partially opaque; retuned to
+  a tighter threshold for a crisp, fully-transparent background.
+
+## [0.9.1] - 2026-08-10
+
+### Added
+- **Local file attachments on task links.** The "🔗 Enlaces / adjuntos" section in the task detail
+  now has a **📁** button that opens a native file picker so you can attach a file from your PC
+  instead of only pasting a URL — the label auto-fills with the file's name when left blank. Local
+  attachments render with a **📎** icon (web links keep **🔗**); one whose file has since been moved
+  or deleted shows in red with a tooltip explaining why.
+
+### Fixed
+- Local file paths attached as a "link" never actually opened — `QDesktopServices.openUrl` was being
+  handed a raw path instead of a proper `file://` URL. Fixed by routing local attachments through
+  `QUrl.fromLocalFile(...)`. Any link (local or web) that still fails to open now shows a warning
+  dialog instead of silently doing nothing.
+- **CI: intermittent test-suite crash on Linux (a different Python 3.10/3.11/3.12 job failing on
+  different runs since the task-timer feature).** Root cause: a stray, unparented
+  `QTimer.singleShot` in the task-diary "scroll to bottom" logic held a closure over a child
+  scrollbar widget; if the dialog was destroyed before the 50ms elapsed, the timer could still fire
+  later — during the test suite's own teardown — against an already-destroyed widget, corrupting
+  the process heap. Fixed by parenting the timer to the dialog so Qt cancels it automatically when
+  the dialog is destroyed, instead of leaving it dangling.
+- Tests constructing `MainWindow()` directly left two more real, unparented timers pending — one of
+  which runs live `git fetch`/`git status` subprocess calls — that could also fire unpredictably
+  during test teardown. Now mocked out and the window is properly closed after each test.
+- `restore_task` (Ctrl+Z undo) always restored every link at `position = 0`, losing their original
+  relative order. The original position is now captured and restored.
+
+### Changed
+- Removed ~40 redundant trailing `conn.commit()` calls across the `database/` package — the
+  connection context manager already commits on clean exit, so these were dead weight.
+- Removed the unused `styles.QSS` module-level constant (the app has gotten its stylesheet via
+  `set_theme()` since the previous forensic pass) and an unreachable `sys.exit(0)` after
+  `os.execv()` in the update-checker.
+
+## [0.9.0] - 2026-08-07
+
+### Added
+- **Hover-to-expand on collapsed columns.** Dragging a task card and holding it over a collapsed
+  column for about a second now unfolds it automatically so you can pick exactly where in the
+  column to drop the card, instead of it always landing at the bottom. A quick drop (before the
+  column has had time to unfold) still works exactly as before. The column always folds itself
+  back up once the drag ends, whether the card was dropped inside it, dropped elsewhere, or the
+  drag was cancelled — it's a temporary peek, not a way to permanently unfold it.
+- **New keyboard shortcuts + a shortcuts reference dialog.** `Ctrl+Shift+N` creates a new column
+  in the active board; `Ctrl+1`…`Ctrl+9` jump straight to the 1st through 9th board in the
+  sidebar; `Ctrl+,` opens Ajustes; `Ctrl+Shift+C` opens the Calendar. **Ctrl+/** opens a new
+  "Atajos de teclado" dialog listing every shortcut in the app — the new ones plus the
+  pre-existing global and rich-text-editor ones — grouped by category. A **❔** button in the
+  sidebar's utility bar (next to 🔍/📅/⚙) opens the same dialog — `Ctrl+/` alone had no visible
+  entry point anywhere in the UI, and typing `/` requires Shift on a Spanish keyboard layout, so it
+  wasn't an intuitive sole way to discover it.
+- **`Ctrl+N` now targets the last column you interacted with** (opened a card in, clicked
+  "+ Añadir Tarea" in, or just clicked), instead of always adding to the board's first column. If
+  nothing qualifies yet — a fresh board load, the tracked column was deleted, or you've since
+  switched boards — it safely falls back to the first column of the currently active board.
+- **Task timer.** A new **⏱ Temporizador** control in the task detail: **▶ Iniciar** records the
+  start time and shows a live "time elapsed" counter next to it; **↺ Reiniciar** resets it to now,
+  **✕ Detener** clears it. All three take effect immediately, without needing "💾 Guardar
+  Cambios". The same elapsed time shows as a badge directly on the task's board card — not just in
+  the dialog — so tasks that have been sitting for too long are visible without opening each one.
+  The badge turns red once it crosses a threshold, configurable in Ajustes (default 24h).
+
+### Fixed
+- **Critical: the app could crash when dropping a card into a hover-expanded column.**
+  Hover-to-expand (above) reloaded the *entire* board to reflect a column unfolding, which
+  destroyed and rebuilt every column widget — including the one the dragged card was still being
+  dragged out of. During a real drag this could get cleaned up mid-drag, and dropping the card
+  afterward crashed the app. Fixed by reconstructing only the one column whose collapsed state
+  actually changed, leaving every other column (in particular the drag's source column) completely
+  untouched. Also fixed a related visual glitch where the expanding column would briefly render
+  out of place relative to its neighbors.
+- `board_view.add_column`'s guard didn't treat `board_id == -1` (the "no board selected" state) as
+  "no board selected", because `not -1` is `False` in Python. Harmless while only reachable from a
+  button that's hidden in that state, but now that `Ctrl+Shift+N` can call it directly, the guard
+  was fixed to match the equivalent check already used by `Ctrl+N`'s quick-add-task shortcut.
+- **Critical: opening and closing task cards leaked a dialog and a `QTimer` forever.** Every task
+  opened from the board or calendar left a `TaskDetailDialog` alive in the background (with its
+  30s live-timer refresh still running) because nothing ever destroyed it after closing. Fixed by
+  destroying the dialog once it finishes, whether closed via Guardar, Cerrar, or Esc.
+- **Critical: `Ctrl+Z` could crash the app when undoing a deleted task whose tag had also been
+  deleted.** Restoring a task's tags during undo no longer assumes every tag it had still exists in
+  the catalog — a tag deleted in between is now silently skipped instead of raising a database
+  error that escaped uncaught and terminated the app.
+- The keyboard-shortcuts dialog (`Ctrl+/`) described `Ctrl+N` as always targeting the board's first
+  column; the text now matches its actual "last active column" behavior (see Added, above).
+- Editing a task from the Calendar (📅) no longer leaves its card stale on the board underneath —
+  the board view now refreshes when the edited task belongs to the currently active board.
+- **Copying a column or an entire board silently dropped a task's due time, recurrence, linked
+  board, timer, and any links.** All of these now survive both "Copiar columna" and "Copiar
+  tablero", matching what undo/redo has always preserved.
+- `create_log` (used for the task diary) no longer commits the new entry before also updating the
+  task's `updated_at`, closing a small window where a follow-up failure could leave the diary entry
+  permanently saved without its parent task's timestamp reflecting it.
+
+### Changed
+- The sidebar's utility bar (🕐🔔🔍📅⚙❔) now spans two rows — the clock on its own line above a
+  centered row of icon buttons — instead of one cramped single row that didn't fit comfortably in
+  the sidebar's width.
+- The task-card timer-alert threshold is now read from settings once per board load instead of
+  once per visible column — same behavior, fewer redundant database reads.
+- Exporting a board to Markdown/JSON now fetches every task's diary in one grouped query instead of
+  one query per task.
+
+## [0.8.0] - 2026-08-05
+
+### Added
+- **Board links on task cards.** A task can now link to a different board (e.g. a summary task
+  "Desarrollo v2.0 SW X" living in a "Tareas" board that points at the dedicated "SW X" board
+  where the detailed work is tracked). Pick the target board from the new **🔗 Tablero
+  vinculado** selector in the task detail dialog, next to Etiquetas/Prioridad; the card then
+  shows a colored, clickable **🔗 <board name>** pill that jumps straight to that board instead
+  of opening the task's own detail. If the linked board is later deleted, the link is
+  automatically cleared.
+- **Arrows in rich text.** Typing `-->` in the task description or the diary/chat editor now
+  auto-converts it to `→` as you type; a new toolbar button (next to the bullet-list button)
+  inserts one on click.
+- **Priority quick-selector.** The task detail dialog now has a small **🚩 Prioridad** selector
+  next to Etiquetas (Baja/Media/Alta by default, customizable via **⚙ Gestionar**). It's backed
+  by the same tag system as any other tag, so the chosen priority automatically shows up as a
+  pill on the board-view card too.
+- **Alt+Up / Alt+Down** cycles between boards in the sidebar.
+- **Per-board auto-sync `.ics` feeds.** The always-up-to-date subscribable calendar feed
+  (Calendario → ⚙ Ajustes → 📂 Elegir archivo…) can now be configured per board, not just
+  globally, mirroring the existing per-board one-off export.
+- Internationalization infrastructure: every user-facing string (~290) now lives in `strings.py`
+  (a flat lookup + `t(key, **kwargs)`) instead of being hardcoded across the UI modules. Spanish
+  is still the only active language — this is extraction only, no translation/switcher yet — but
+  adding a second language now only touches one file.
+- Headless Qt widget smoke tests (calendar grid, deadline-bell popup, settings dialog).
+
+### Changed
+- Light theme: fixed several spots that stayed hardcoded to the dark palette (board title,
+  sidebar-toggle icon, task-card border, due-date badge), so switching to light theme no longer
+  leaves near-invisible text/icons.
+- Tag-pill styling centralized into `styles.tag_pill_css(color)` (previously duplicated between
+  board cards and the task detail dialog).
+
+### Fixed
+- `apply_theme()` now runs before `init_ui()` on startup, so a saved light-theme preference is
+  reflected immediately instead of only after the first manual theme toggle.
+
+## [0.7.0] - 2026-08-03
+
+### Added
+- **Tables in the description and diary.** Paste a table (from Excel/Sheets/Word, or plain
+  tab-separated text) and it becomes a real table instead of jumbled text; the new **▦** toolbar
+  button inserts an empty table (prompts for rows/columns).
+- **Strikethrough** formatting (Ctrl+Shift+X, plus a toolbar button) in the description and diary.
+
+### Fixed
+- Database connections are now closed after every use (previously left open until garbage-collected).
+- The bell, calendar and `.ics` feed no longer refresh on plain navigation (switching boards,
+  changing the theme) — only when a task, column or board actually changes.
+
+## [0.6.0] - 2026-08-01
+
+### Added — Calendar depth (A)
+- **Time-of-day due + reminders.** A task can have an optional **time** (`due_time`); such tasks
+  export as timed events with a **`VALARM`** (15-minute reminder) instead of all-day.
+- **Week / Day views.** The calendar now toggles between **Mes / Semana / Día**.
+- **Filter by board + legend.** A board filter and a colored board legend on the calendar.
+- **Per-board `.ics` feeds.** `build_ics(board_id=…)` and a per-board picker in the export dialog.
+
+### Added — Power features (B)
+- **Recurring tasks** (daily / weekly / monthly): set in the task dialog; a **🔁** badge on the card;
+  overdue recurring tasks **advance to the next occurrence on startup**.
+- **Undo / redo** for destructive deletes (task, column, board) via **Ctrl+Z / Ctrl+Y** — restores
+  the whole deleted subtree (tags, diary, links) from a snapshot.
+- **Attachments / links** on a card: add URLs/paths (open, delete); **🔗** count on the card.
+- **Keyboard shortcuts:** **Ctrl+N** new task, **Ctrl+F** search, **Esc** closes dialogs.
+
+### Added — Polish & platform (C)
+- **Board archiving:** right-click a board to archive/unarchive; a **🗄 Archivados** toggle hides them.
+- **Export / report:** a sidebar **⬇ Exportar** menu → **JSON**, **CSV** (tasks) or a **Markdown**
+  project report (`exporter.py`).
+- **Settings screen** (⚙ in the sidebar): **theme** (dark / **light**, experimental), Windows
+  **notifications** toggle, and the window **size/position is remembered**.
+
+### Changed
+- `database` gains `boards.archived`, `tasks.due_time`/`recurrence`, and a `task_links` table (all via
+  additive migrations); `styles` is now `build_qss(palette)` + `set_theme()` with dark/light palettes.
+
+### Added
+- **Collapsible board columns.** A collapse button folds a column to a narrow strip (expand button,
+  task count, vertical name) to save horizontal space; the collapsed state is saved per column
+  (`columns.collapsed`). **Dragging a card onto a collapsed column expands it** and drops the card in.
+- **Edit a diary/chat comment.** Each comment now has clear **edit** and **delete** icon buttons;
+  editing opens an inline editor (new `database.update_log`).
+- **Rich-text editor upgrades** (task description + diary): **Tab** nests a bullet into a sub‑bullet
+  (**Shift+Tab** un‑nests; glyph varies by depth ● ○ ▪); external text now **pastes as plain text**
+  (no foreign fonts/colors); and you can **paste images** directly (embedded inline in the note).
+- **Calendar sync: Outlook & Apple/iCloud.** The Ajustes subscribe helper now has **Google / Outlook /
+  Apple·iCloud** buttons (Apple copies a `webcal://` link) plus a detailed per‑provider guide; the
+  README sync section documents all three in full.
+
+### Changed
+- Formatting shortcuts now accept both conventions: **bold = Ctrl+B or Ctrl+N**, **italic = Ctrl+K or
+  Ctrl+I** (Spanish MS Word uses N/K). The italic toolbar button now shows **K** (an italic "I" reads
+  like a "/").
+- **Column, sidebar-toggle and comment icons are now painted** (pixmaps drawn at runtime) instead of
+  Unicode/emoji glyphs, so they always render regardless of font. Collapse/expand shows ◀/▶ arrows and
+  edit shows a pencil; the sidebar toggle now uses ◀/▶ too.
+- **Bigger task-detail window** (more room for the description and diary), a roomier growable diary
+  box (there was never a character limit — content is stored in full), and pasted **images scale to
+  the text box width** — chat images use the (narrower) history width so there's no horizontal scroll
+  and the entry's edit/delete buttons stay visible.
+
+### Removed
+- **Subtasks / checklists** (introduced in 0.5.0). The whole feature was removed — the in‑card
+  checklist, the card `☑ done/total` badge, and the `subtasks` table with its DB helpers — per a
+  product decision to drop that approach for now.
+
+### Fixed
+- **Windows taskbar icon.** The window/app/tray icon is resolved by absolute path and prefers the
+  multi‑resolution `ekin_icon.ico`, so launching from the desktop shortcut (a different working
+  directory) no longer falls back to Python's generic taskbar icon.
+
+## [0.5.0] - 2026-07-29
+
+### Added
+- **Subtasks / checklists inside a task.** Each task detail dialog has a checklist section — add,
+  tick, rename and delete items — that persists immediately. Board cards show a **`☑ done/total`**
+  progress badge (green when complete). New `subtasks` table + `database` helpers (`create_subtask`,
+  `get_subtasks`, `set_subtask_done`, `update_subtask_title`, `delete_subtask`,
+  `get_subtasks_progress_bulk`); `get_tasks` exposes `subtasks_done`/`subtasks_total`; copying a
+  column/board carries subtasks; deleting a task cascades them.
+- **Global search & filter.** A 🔍 button in the sidebar (and **Ctrl+F**) opens a search dialog that
+  filters tasks across all boards by **text** (title/description), **board**, **tag**, and
+  **only-with-due-date**; clicking a result jumps to its card. New `database.search_tasks()`.
+- **CI workflow** (`.github/workflows/ci.yml`): runs `ruff` and `pytest` (Python 3.10–3.12, with the
+  Qt system libraries PySide6 needs on Linux) on every push to `main` and on pull requests.
+- `ruff` as a dev dependency with a high-signal lint config (`E4/E7/E9/F`); cleaned up the handful of
+  unused imports / variables it surfaced.
+
+## [0.4.0] - 2026-07-22
+
+### Added
+- **Overdue tasks in the deadline bell.** The bell popup now shows an **"ATRASADAS"** group
+  (highlighted) for tasks past their due date, above **HOY** and **MAÑANA**, and the count badge
+  includes them. Backed by querying everything due on or before tomorrow.
+- **Drag a task in the calendar to reschedule it.** Calendar chips are draggable; dropping one on
+  another day updates that task's due date (new `database.update_task_due_date`) and re-syncs the
+  bell and the `.ics` feed automatically.
+- **"Subscribe in Google" helper in Ajustes.** A field for the public `.ics` URL plus a button that
+  saves it (`ics_public_url` setting), copies it to the clipboard and opens Google Calendar's
+  *add-by-URL* page — automating the manual step users trip on.
+- **Automatic database backups on startup.** New `backups.py` writes a consistent SQLite snapshot to
+  a `backups/` folder before any schema migration runs, keeping the 5 most recent. No-op on first run.
+
+### Changed
+- **`database.py` `db_path` handling is now uniform.** All ~38 data-access functions resolve
+  `db_path` at call time (`db_path=None` -> `db_path or DB_NAME`) instead of freezing `DB_NAME` at
+  import. Reassigning `database.DB_NAME` is now honored everywhere, and the whole layer is testable
+  against temporary databases without monkeypatching. `ics_export.build_ics/export_ics` too.
+- Renamed `TaskListArea.layout` to `list_layout` so it no longer shadows `QWidget.layout()`.
+
+### Fixed
+- **Same-column drag reorder off-by-one.** The hidden dragged card was counted when computing the
+  drop index, mismatching the target list (which excludes the moved card) and misplacing a card
+  dropped below its original slot. The index is now computed in the non-dragged card space
+  (extracted to `widgets.compute_drop_index`, unit-tested).
+- **iCalendar line folding** could emit continuation lines 1 octet over the 75-octet RFC 5545 limit
+  (the leading continuation space wasn't counted); continuations are now capped at 74 content octets.
+- Removed a dead `#TaskCardDueDate` object name that had no QSS rule (the label is styled inline).
+
+## [0.3.2] - 2026-07-17
+
+### Fixed
+- The board header now shows the selected board's real name instead of a static "Mi Tablero".
+
+### Changed
+- Tag loading is batched to remove an N+1 query: `get_tasks` and `get_scheduled_tasks` now fetch all
+  tags in a single query via the new `get_task_tags_bulk()` helper (cheaper board/calendar/bell loads).
+- Test suite aligned with the current tag shape (`category_id`) and extended with coverage for the
+  scheduled-task queries, `app_settings`, `get_task_board_id`, and bulk tag loading.
+
+## [0.3.1] - 2026-07-14
+
+### Added
+- Safety-net timer that re-writes the synced `.ics` every 5 minutes while the app is open (in
+  addition to the existing change-driven writes). It only writes when the content actually changed,
+  so it never produces redundant cloud re-uploads.
+
+## [0.3.0] - 2026-07-13
+
+### Added
+- Sidebar utility bar with a live date/time clock, a deadline **bell**, and a **calendar** button.
+- Deadline bell: a popup listing tasks due **today or tomorrow across all boards**, grouped by day,
+  with a count badge on the bell. Clicking a task jumps to its board and opens the card.
+- Native **Windows notifications** (via a system-tray icon) for tasks due today, plus a tray menu
+  (Open / Quit) and double-click-to-restore.
+- **Monthly calendar view** (toggled from the sidebar) showing tasks by due date, with month
+  navigation, a "Hoy" shortcut, and per-task chips that open the card; **✖ Cerrar** returns to the
+  board and **⚙ Ajustes** configures sync.
+- **Calendar sync via iCalendar (.ics)**: a one-off export plus an **auto-updated feed** that Ekin
+  keeps current and you subscribe to from Google Calendar, Apple Calendar or Outlook. Events carry a
+  stable per-task `UID` with `SEQUENCE`/`LAST-MODIFIED`, and the file is deterministic (it only
+  changes when task data changes) to avoid spurious re-uploads in cloud-synced folders.
+- `app_settings` key/value table to persist the `.ics` sync path.
+- README guide: "Syncing Your Due Dates with Google Calendar, Apple & Outlook".
+
+### Changed
+- New database helpers: `get_scheduled_tasks`, `get_task_board_id`, `get_setting`/`set_setting`.
+  These (and the new scheduled query) resolve `DB_NAME` at call time, so the module's DB path is
+  actually overridable instead of being frozen at import.
+- `board_view` now emits a `data_changed` signal after (re)loading, which keeps the deadline bell,
+  the calendar view, and the synced `.ics` file in sync automatically.
+
+## [0.2.0] - 2026-07-13
+
+### Added
+- Drag columns by their title to reorder them within a board, or drop them onto another board's
+  button in the sidebar to move them there — replacing the old "Move to another board..." dialog.
+- Structured, permanent tags: tags are a reusable Category + Value pair (e.g. "Prioridad: Alta"),
+  rendered as "CATEGORÍA: VALOR" pills everywhere. A task holds a single value per tag; clicking a
+  pill in the task detail edits its value in place, or sets it to "Ninguno" to hide/remove it (the
+  card only shows tags that have a value). A dedicated tag manager lets you create/rename/delete
+  tags and pre-define each one's palette of values with colors; assigning picks from that catalog.
+- Basic rich text formatting (bold, italic, bullet lists) for both the task description and the
+  diary/chat entries, via a small toolbar above each editor. The Bold/Italic buttons are properly
+  styled with an active-state highlight and stay in sync with the native Ctrl+B / Ctrl+I shortcuts.
+  Typing `* `, `- ` or `+ ` at the start of a line auto-creates a bullet list (and `1. ` / `1) ` a
+  numbered list); pressing Enter on an empty item exits the list.
+- Sidebar header now shows the Ekin logo next to "EKIN" instead of plain "EKIN KANBAN" text.
+
+### Changed
+- `database.set_task_tags()` now takes a list of tag-value ids instead of `{"text", "color"}`
+  dicts; `get_task_tags()`/`get_tasks()`/`get_task()`/`get_tag_value()` return `{"tag_value_id",
+  "category_id", "category", "value", "color"}`. Existing freeform tags are migrated automatically
+  into a "General" category on upgrade.
+- Tag catalog is now managed explicitly: added `create_tag_category`/`rename_tag_category`/
+  `delete_tag_category`, `create_tag_value`/`update_tag_value`/`delete_tag_value`, and
+  `value_exists_in_category` in `database.py`. Values and colors are defined up front in the tag
+  manager rather than created on the fly while assigning.
+- Diary entries are now stored as rich HTML (from the new formatting toolbar) instead of plain text.
+
+### Fixed
+- Desktop shortcut created by `install.ps1` now uses a proper multi-resolution `ekin_icon.ico`
+  instead of a `.png` (Windows `.lnk` shortcuts don't render `.png` icons reliably, causing the
+  generic file icon to show instead).
+- Set an explicit Windows `AppUserModelID` on startup so the running app is not grouped under
+  `pythonw.exe`'s generic icon in the taskbar.
+
+## [0.1.0] - 2026-07-10
+
+### Added
+- Initial Kanban board: boards, columns, tasks, and per-task journal (diario) with SQLite persistence.
+- Due dates, multiple colored tags per task, and copy/move columns & boards between each other.
+- Collapsible sidebar and per-board accent colors.
+- PowerShell one-click installer (`install.ps1`) and a silent git-based auto-updater on startup.
+- Formal dependency management via `pyproject.toml` (PySide6 pinned, `pytest` as a `dev` extra).
+- `pytest` test suite covering `database.py` (CRUD, cascading deletes, drag-and-drop repositioning, board/column copy-move).
+- Version now shown in the application window title.
+
+### Changed
+- Consolidated the duplicated `hex_to_rgb` helper (previously repeated in `sidebar.py`, `board_view.py`, and `widgets.py`) into `styles.py`.
