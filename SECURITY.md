@@ -2,7 +2,8 @@
 
 ## Reporting a vulnerability
 
-If you find a security problem in Ekin, please email **security@txeksystems.com** and do not open a public issue.
+If you find a security problem in Ekin, please email **security@txeksystems.com**, or use **Report a vulnerability**
+in this repository's [Security](https://github.com/Txek-Systems/ekin/security) tab. Do not open a public issue.
 
 Include, if you can:
 
@@ -23,6 +24,6 @@ Only the latest release receives security fixes. Installed copies find new versi
 
 ---
 
-*ES:* Si encuentras un problema de seguridad en Ekin, escribe a **security@txeksystems.com** y no abras una incidencia
-pública. Te confirmamos que lo hemos recibido en un máximo de 14 días y te respondemos desde
+*ES:* Si encuentras un problema de seguridad en Ekin, escribe a **security@txeksystems.com** o usa «Report a vulnerability»
+en la pestaña Security de este repositorio, y no abras una incidencia pública. Te confirmamos que lo hemos recibido en un máximo de 14 días y te respondemos desde
 hola@txeksystems.com. Solo la última versión recibe correcciones de seguridad.
