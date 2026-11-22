@@ -19,6 +19,10 @@ Ekin is proprietary software from Txek Systems, and its use is governed by the
 [Ekin EULA](https://txeksystems.com/ekin/eula). The installer also ships third-party software under its own licenses,
 listed in its `THIRD_PARTY_NOTICES.md`.
 
+## Security
+
+To report a vulnerability, see [SECURITY.md](SECURITY.md).
+
 Website: <https://txeksystems.com>
 
 ---
@@ -26,3 +30,4 @@ Website: <https://txeksystems.com>
 *ES:* Ekin es un tablero Kanban local para Windows que trabaja con tus agentes de IA a través de MCP. Este repositorio
 no tiene código: solo las versiones para descargar, este README y el historial de cambios. Cada equipo tiene 30 días de
 prueba gratis, sin cuenta ni tarjeta. Su uso se rige por el [EULA de Ekin](https://txeksystems.com/ekin/eula).
+Para avisar de un problema de seguridad, mira [SECURITY.md](SECURITY.md).
