@@ -10,7 +10,7 @@ Include, if you can:
 - what the problem is and the steps to reproduce it;
 - what an attacker could do with it.
 
-We confirm we have received your report within 5 working days and keep you informed until it is fixed. Our replies
+We confirm we have received your report within 14 days and keep you informed until it is fixed. Our replies
 come from hola@txeksystems.com. If you wish, we credit you in the [changelog](CHANGELOG.md) when the fix is released.
 
 Please give us reasonable time to release a fix before you make the problem public, and do not access or change
@@ -24,5 +24,5 @@ Only the latest release receives security fixes. Installed copies find new versi
 ---
 
 *ES:* Si encuentras un problema de seguridad en Ekin, escribe a **security@txeksystems.com** y no abras una incidencia
-pública. Te confirmamos que lo hemos recibido en un máximo de 5 días laborables y te respondemos desde
+pública. Te confirmamos que lo hemos recibido en un máximo de 14 días y te respondemos desde
 hola@txeksystems.com. Solo la última versión recibe correcciones de seguridad.
